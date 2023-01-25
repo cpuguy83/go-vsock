@@ -1,6 +1,10 @@
 package vsock
 
-import "golang.org/x/sys/unix"
+import (
+	"time"
+
+	"golang.org/x/sys/unix"
+)
 
 func accept(fd int) (connFd int, ra unix.Sockaddr, err error) {
 	for {
@@ -116,6 +120,17 @@ func shutdown(fd, how int) error {
 func closeFd(fd int) error {
 	for {
 		err := unix.Close(fd)
+		if err == unix.EINTR {
+			continue
+		}
+		return err
+	}
+}
+
+func setSockOptTime(fd int, level, opt int, t time.Time) error {
+	tv := unix.NsecToTimeval(t.UnixNano())
+	for {
+		err := unix.SetsockoptTimeval(fd, level, opt, &tv)
 		if err == unix.EINTR {
 			continue
 		}

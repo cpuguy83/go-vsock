@@ -3,6 +3,7 @@ package vsock
 import (
 	"net"
 	"os"
+	"time"
 
 	"golang.org/x/sys/unix"
 )
@@ -74,4 +75,34 @@ func (v *VsockConn) CloseWrite() error {
 		return e
 	}
 	return err
+}
+
+func (v *VsockConn) control(f func(fd int) error) error {
+	var err error
+	e := v.rc.Control(func(fd uintptr) {
+		err = f(int(fd))
+	})
+	if e != nil {
+		return e
+	}
+	return err
+}
+
+func (v *VsockConn) SetDeadline(t time.Time) error {
+	if err := v.SetReadDeadline(t); err != nil {
+		return err
+	}
+	return v.SetWriteDeadline(t)
+}
+
+func (v *VsockConn) SetReadDeadline(t time.Time) error {
+	return v.control(func(fd int) error {
+		return setSockOptTime(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, t)
+	})
+}
+
+func (v *VsockConn) SetWriteDeadline(t time.Time) error {
+	return v.control(func(fd int) error {
+		return setSockOptTime(fd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, t)
+	})
 }

@@ -5,7 +5,6 @@ import (
 	"net"
 	"os"
 	"syscall"
-	"time"
 
 	"golang.org/x/sys/unix"
 )
@@ -35,18 +34,6 @@ func (v *VsockConn) LocalAddr() net.Addr {
 
 func (v *VsockConn) RemoteAddr() net.Addr {
 	return &VsockAddr{v.ra.CID, v.ra.Port}
-}
-
-func (v *VsockConn) SetDeadline(t time.Time) error {
-	return v.f.SetDeadline(t)
-}
-
-func (v *VsockConn) SetReadDeadline(t time.Time) error {
-	return v.f.SetReadDeadline(t)
-}
-
-func (v *VsockConn) SetWriteDeadline(t time.Time) error {
-	return v.f.SetWriteDeadline(t)
 }
 
 func (v *VsockConn) SyscallConn() (syscall.RawConn, error) {
